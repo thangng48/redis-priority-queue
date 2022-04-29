@@ -1,0 +1,28 @@
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Start Redis
+        uses: supercharge/redis-github-action@1.4.0
+        with:
+          redis-version: 6
+          redis-container-name: "redis"
+          redis-port: 6379
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '^1.17.0'
+          check-latest: true
+      - run: /bin/bash -c "diff -u <(echo -n) <(gofmt -d -e .)"
+      - run: go get ./...
+      - run: go vet -v ./...
+      - run: go test ./...
